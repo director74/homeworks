@@ -13,19 +13,21 @@ func Unpack(s string) (string, error) {
 	b := strings.Builder{}
 
 	var nextIsDigit bool
+	var curDigit bool
 	rStr := []rune(s)
 
 	for ind, val := range rStr {
 		nextIsDigit = false
+		curDigit = unicode.IsDigit(val)
 		if ind+1 < len(rStr) {
 			nextIsDigit = unicode.IsDigit(rStr[ind+1])
 		}
 
-		if unicode.IsDigit(val) {
-			if ind == 0 || nextIsDigit {
-				return "", ErrInvalidString
-			}
-		} else {
+		if curDigit && (ind == 0 || nextIsDigit) {
+			return "", ErrInvalidString
+		}
+
+		if !curDigit {
 			if nextIsDigit {
 				cnt, _ := strconv.Atoi(string(rStr[ind+1]))
 				if cnt > 0 {
