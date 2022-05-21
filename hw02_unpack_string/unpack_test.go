@@ -43,3 +43,40 @@ func TestUnpackInvalidString(t *testing.T) {
 		})
 	}
 }
+
+func TestUnpackUnicode(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{input: "Дж3ек", expected: "Джжжек"},
+		{input: "Привет мир♬4", expected: "Привет мир♬♬♬♬"},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			result, err := Unpack(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestZeros(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{input: "T0e0s0t0", expected: ""},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			result, err := Unpack(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
