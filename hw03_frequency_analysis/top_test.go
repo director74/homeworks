@@ -122,5 +122,4 @@ func TestTop10(t *testing.T) {
 			require.NotContains(t, Top10(text2), "Пять")
 		}
 	})
-
 }

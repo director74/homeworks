@@ -16,7 +16,7 @@ func Top10(text string) []string {
 	dict := make(map[string]int)
 
 	for _, str := range strings.Fields(text) {
-		dict[str] += 1
+		dict[str]++
 	}
 
 	result := make([]textPart, 0)
@@ -26,7 +26,8 @@ func Top10(text string) []string {
 	}
 
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].cnt > result[j].cnt || result[i].cnt == result[j].cnt && strings.Compare(result[i].word, result[j].word) < 0
+		return result[i].cnt > result[j].cnt ||
+			result[i].cnt == result[j].cnt && strings.Compare(result[i].word, result[j].word) < 0
 	})
 
 	j := len(result)
