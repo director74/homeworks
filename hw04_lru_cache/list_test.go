@@ -48,4 +48,14 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("wrong incoming data", func(t *testing.T) {
+		l := NewList()
+		require.NotPanics(t, func() {
+			l.Remove(nil)
+		})
+		require.NotPanics(t, func() {
+			l.MoveToFront(nil)
+		})
+	})
 }
