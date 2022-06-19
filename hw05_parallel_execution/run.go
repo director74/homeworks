@@ -9,16 +9,16 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-func worker(tasks *[]Task, T chan<- error, mu *sync.RWMutex, wg *sync.WaitGroup) {
+func worker(tasks *[]Task, t chan<- error, mu *sync.RWMutex, wg *sync.WaitGroup) {
 	var task Task
 	pointer := *tasks
 	mu.Lock()
 	task, *tasks = pointer[0], pointer[1:]
 	mu.Unlock()
 	wg.Done()
-	T <- task()
+	t <- task()
 	if len(*tasks) == 0 {
-		close(T)
+		close(t)
 	}
 }
 
@@ -27,14 +27,14 @@ func Run(tasks []Task, n, m int) error {
 	mu := sync.RWMutex{}
 	wg := sync.WaitGroup{}
 
-	var T = make(chan error, n)
+	t := make(chan error, n)
 
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go worker(&tasks, T, &mu, &wg)
+		go worker(&tasks, t, &mu, &wg)
 	}
 
-	for result := range T {
+	for result := range t {
 		if result != nil {
 			errorsCnt++
 		}
@@ -45,7 +45,7 @@ func Run(tasks []Task, n, m int) error {
 
 		if len(tasks) > 0 {
 			wg.Add(1)
-			go worker(&tasks, T, &mu, &wg)
+			go worker(&tasks, t, &mu, &wg)
 		}
 	}
 
