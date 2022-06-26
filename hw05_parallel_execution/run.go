@@ -11,39 +11,41 @@ type Task func() error
 
 func Run(tasks []Task, n, m int) error {
 	var errorsCnt int
-	var errorsChan = make(chan error)
-	var done = make(chan struct{})
+	errorsChan := make(chan error)
+	done := make(chan struct{})
+	mu := sync.RWMutex{}
+	wg := sync.WaitGroup{}
 
-	go func(done <-chan struct{}) {
-		mu := sync.RWMutex{}
-		wg := sync.WaitGroup{}
+	worker := func() {
+		var task Task
+		defer wg.Done()
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				mu.Lock()
+				leftCnt := len(tasks)
+				if leftCnt > 0 {
+					task, tasks = tasks[0], tasks[1:]
+				}
+				mu.Unlock()
+				if leftCnt == 0 {
+					return
+				}
+				errorsChan <- task()
+			}
+		}
+	}
+
+	go func() {
 		for i := 0; i < n; i++ {
 			wg.Add(1)
-			go func() {
-				var task Task
-				defer wg.Done()
-				for {
-					select {
-					case <-done:
-						return
-					default:
-						mu.Lock()
-						leftCnt := len(tasks)
-						if leftCnt > 0 {
-							task, tasks = tasks[0], tasks[1:]
-						}
-						mu.Unlock()
-						if leftCnt == 0 {
-							return
-						}
-						errorsChan <- task()
-					}
-				}
-			}()
+			go worker()
 		}
 		wg.Wait()
 		close(errorsChan)
-	}(done)
+	}()
 
 	for result := range errorsChan {
 		if result != nil {
