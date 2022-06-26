@@ -20,17 +20,22 @@ func Run(tasks []Task, n, m int) error {
 		for i := 0; i < n; i++ {
 			wg.Add(1)
 			go func() {
+				var task Task
 				defer wg.Done()
-				for len(tasks) > 0 {
+				for {
 					select {
 					case <-done:
 						return
 					default:
-						var task Task
 						mu.Lock()
-						task, tasks = tasks[0], tasks[1:]
+						leftCnt := len(tasks)
+						if leftCnt > 0 {
+							task, tasks = tasks[0], tasks[1:]
+						}
 						mu.Unlock()
-
+						if leftCnt == 0 {
+							return
+						}
 						errorsChan <- task()
 					}
 				}
@@ -45,7 +50,7 @@ func Run(tasks []Task, n, m int) error {
 			errorsCnt++
 		}
 
-		if errorsCnt == m {
+		if errorsCnt == m && m > 0 {
 			close(done)
 		}
 	}
