@@ -9,47 +9,47 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-func worker(tasks *[]Task, t chan<- error, mu *sync.RWMutex, wg *sync.WaitGroup) {
-	var task Task
-	pointer := *tasks
-	mu.Lock()
-	task, *tasks = pointer[0], pointer[1:]
-	mu.Unlock()
-	wg.Done()
-	t <- task()
-	if len(*tasks) == 0 {
-		close(t)
-	}
-}
-
 func Run(tasks []Task, n, m int) error {
 	var errorsCnt int
-	mu := sync.RWMutex{}
-	wg := sync.WaitGroup{}
+	var errorsChan = make(chan error)
+	var done = make(chan struct{})
 
-	t := make(chan error, n)
+	go func(done <-chan struct{}) {
+		mu := sync.RWMutex{}
+		wg := sync.WaitGroup{}
+		for i := 0; i < n; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for len(tasks) > 0 {
+					select {
+					case <-done:
+						return
+					default:
+						var task Task
+						mu.Lock()
+						task, tasks = tasks[0], tasks[1:]
+						mu.Unlock()
 
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go worker(&tasks, t, &mu, &wg)
-	}
+						errorsChan <- task()
+					}
+				}
+			}()
+		}
+		wg.Wait()
+		close(errorsChan)
+	}(done)
 
-	for result := range t {
+	for result := range errorsChan {
 		if result != nil {
 			errorsCnt++
 		}
 
-		if errorsCnt >= m {
-			break
-		}
-
-		if len(tasks) > 0 {
-			wg.Add(1)
-			go worker(&tasks, t, &mu, &wg)
+		if errorsCnt == m {
+			close(done)
 		}
 	}
 
-	wg.Wait()
 	if errorsCnt >= m {
 		return ErrErrorsLimitExceeded
 	}
