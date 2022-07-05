@@ -1,4 +1,4 @@
-module github.com/director74/homeworks/tree/master/hw06_pipeline_execution
+module github.com/director74/homeworks/hw06_pipeline_execution
 
 go 1.16
 
