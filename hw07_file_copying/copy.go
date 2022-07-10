@@ -50,9 +50,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	buff := make([]byte, buffSize)
 	for offset < size {
 		read, readErr := fromFile.ReadAt(buff, offset)
-		offset += int64(read)
-		if read > 0 {
-			cutLimit = int64(read)
+		cutLimit = int64(read)
+		offset += cutLimit
+		if cutLimit > 0 {
 			if limit > 0 {
 				if limit <= cutLimit {
 					cutLimit = limit
