@@ -9,23 +9,18 @@ import (
 )
 
 var (
-	ErrUnsupportedFile       = errors.New("unsupported file")
-	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
+	ErrUnsupportedFile             = errors.New("unsupported file")
+	ErrOffsetExceedsFileSize       = errors.New("offset exceeds file size")
+	copyBuffSize             int64 = 512
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	var buffSize int64
 	var cutLimit int64
 	fromFile, err := os.Open(fromPath)
 	if err != nil {
 		return err
 	}
 	defer fromFile.Close()
-	toFile, err := os.Create(toPath)
-	if err != nil {
-		return err
-	}
-	defer toFile.Close()
 	fileInfo, statErr := fromFile.Stat()
 	if statErr != nil {
 		return statErr
@@ -38,16 +33,21 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
+	toFile, err := os.Create(toPath)
+	if err != nil {
+		return err
+	}
+	defer toFile.Close()
+
 	if limit > 0 && (offset+limit) < size {
 		size = limit
 	}
 
-	buffSize = 512
-	steps := int64(math.Ceil(float64(size-offset) / float64(buffSize)))
+	steps := int64(math.Ceil(float64(size-offset) / float64(copyBuffSize)))
 	bar := pb.Start64(steps)
 	defer bar.Finish()
 
-	buff := make([]byte, buffSize)
+	buff := make([]byte, copyBuffSize)
 	for offset < size {
 		read, readErr := fromFile.ReadAt(buff, offset)
 		cutLimit = int64(read)
