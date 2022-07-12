@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/stretchr/testify/require"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCopy(t *testing.T) {
