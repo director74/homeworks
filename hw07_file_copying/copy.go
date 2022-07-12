@@ -53,12 +53,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		cutLimit = int64(read)
 		offset += cutLimit
 		if cutLimit > 0 {
-			if limit > 0 {
-				if limit <= cutLimit {
-					cutLimit = limit
-				} else {
-					limit -= cutLimit
-				}
+			if limit > 0 && limit <= cutLimit {
+				cutLimit = limit
+			} else if limit > 0 && limit > cutLimit {
+				limit -= cutLimit
 			}
 
 			_, writeErr := toFile.Write(buff[:cutLimit])
