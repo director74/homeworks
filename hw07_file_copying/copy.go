@@ -2,14 +2,77 @@ package main
 
 import (
 	"errors"
+	"io"
+	"math"
+	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
-	ErrUnsupportedFile       = errors.New("unsupported file")
-	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
+	ErrUnsupportedFile             = errors.New("unsupported file")
+	ErrOffsetExceedsFileSize       = errors.New("offset exceeds file size")
+	copyBuffSize             int64 = 512
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	// Place your code here.
+	var cutLimit int64
+	fromFile, err := os.Open(fromPath)
+	if err != nil {
+		return err
+	}
+	defer fromFile.Close()
+	fileInfo, statErr := fromFile.Stat()
+	if statErr != nil {
+		return statErr
+	}
+	if !fileInfo.Mode().IsRegular() {
+		return ErrUnsupportedFile
+	}
+	size := fileInfo.Size()
+	if offset > size {
+		return ErrOffsetExceedsFileSize
+	}
+
+	toFile, err := os.Create(toPath)
+	if err != nil {
+		return err
+	}
+	defer toFile.Close()
+
+	if limit > 0 && (offset+limit) < size {
+		size = limit
+	}
+
+	steps := int64(math.Ceil(float64(size-offset) / float64(copyBuffSize)))
+	bar := pb.Start64(steps)
+	defer bar.Finish()
+
+	buff := make([]byte, copyBuffSize)
+	for offset < size {
+		read, readErr := fromFile.ReadAt(buff, offset)
+		cutLimit = int64(read)
+		offset += cutLimit
+		if limit > 0 {
+			if limit <= cutLimit {
+				cutLimit = limit
+			} else {
+				limit -= cutLimit
+			}
+		}
+
+		_, writeErr := toFile.Write(buff[:cutLimit])
+		if writeErr != nil {
+			return writeErr
+		}
+		bar.Increment()
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return readErr
+		}
+	}
+
 	return nil
 }
