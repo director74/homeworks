@@ -53,19 +53,19 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		read, readErr := fromFile.ReadAt(buff, offset)
 		cutLimit = int64(read)
 		offset += cutLimit
-		if cutLimit > 0 {
-			if limit > 0 && limit <= cutLimit {
+		if limit > 0 {
+			if limit <= cutLimit {
 				cutLimit = limit
-			} else if limit > 0 && limit > cutLimit {
+			} else {
 				limit -= cutLimit
 			}
-
-			_, writeErr := toFile.Write(buff[:cutLimit])
-			if writeErr != nil {
-				return writeErr
-			}
-			bar.Increment()
 		}
+
+		_, writeErr := toFile.Write(buff[:cutLimit])
+		if writeErr != nil {
+			return writeErr
+		}
+		bar.Increment()
 		if readErr == io.EOF {
 			break
 		}
