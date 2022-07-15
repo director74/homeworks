@@ -1,8 +1,8 @@
 package main
 
 import (
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -30,21 +30,21 @@ func TestCopy(t *testing.T) {
 	t.Run("multibyte copy", func(t *testing.T) {
 		source := "testdata/input_multibyte.txt"
 		compare := "testdata/input_multibyte_offset15_limit52.txt"
-		dest := "result/result.txt"
+		resultFile, tmpErr := os.CreateTemp("/tmp", "res")
 
-		_ = Copy(source, dest, 15, 52)
+		errCopy := Copy(source, resultFile.Name(), 15, 52)
 
 		compareFile, _ := os.Open(compare)
-		compareContent, _ := ioutil.ReadAll(compareFile)
+		compareContent, _ := io.ReadAll(compareFile)
 
-		resultFile, _ := os.Open(dest)
-		resultContent, _ := ioutil.ReadAll(resultFile)
+		resultContent, _ := io.ReadAll(resultFile)
 
 		compareFile.Close()
 		resultFile.Close()
 
-		os.Remove(dest)
-
+		os.Remove(resultFile.Name())
+		require.NoError(t, tmpErr)
+		require.NoError(t, errCopy)
 		require.Equal(t, compareContent, resultContent)
 	})
 }
