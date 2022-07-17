@@ -16,8 +16,10 @@ type EnvValue struct {
 	NeedRemove bool
 }
 
-var ErrForbiddenFileSymbols = errors.New("filename contains =")
-var ErrEmptyDirPath = errors.New("path to env files is empty")
+var (
+	ErrForbiddenFileSymbols = errors.New("filename contains =")
+	ErrEmptyDirPath         = errors.New("path to env files is empty")
+)
 
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
@@ -49,7 +51,7 @@ func ReadDir(dir string) (Environment, error) {
 		if success {
 			line := sc.Text()
 			line = strings.TrimRight(line, "\t ")
-			line = string(bytes.Replace([]byte(line), []byte("\000"), []byte("\n"), -1))
+			line = string(bytes.ReplaceAll([]byte(line), []byte("\000"), []byte("\n")))
 			result[file.Name()] = EnvValue{Value: line, NeedRemove: false}
 		} else {
 			result[file.Name()] = EnvValue{NeedRemove: true}
