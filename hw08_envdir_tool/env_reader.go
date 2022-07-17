@@ -16,12 +16,17 @@ type EnvValue struct {
 	NeedRemove bool
 }
 
-var ForbiddenFileSymbols = errors.New("filename contains =")
+var ErrForbiddenFileSymbols = errors.New("filename contains =")
+var ErrEmptyDirPath = errors.New("path to env files is empty")
 
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
 	result := make(Environment, 0)
+
+	if len(dir) == 0 {
+		return nil, ErrEmptyDirPath
+	}
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -31,7 +36,7 @@ func ReadDir(dir string) (Environment, error) {
 	for _, file := range files {
 		founded := strings.Index(file.Name(), "=")
 		if founded >= 0 {
-			return nil, ForbiddenFileSymbols
+			return nil, ErrForbiddenFileSymbols
 		}
 
 		curFile, openErr := os.Open(dir + string(os.PathSeparator) + file.Name())
