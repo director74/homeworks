@@ -2,10 +2,11 @@ package main
 
 import (
 	"errors"
-	"github.com/stretchr/testify/require"
 	"io/fs"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestReadDir(t *testing.T) {

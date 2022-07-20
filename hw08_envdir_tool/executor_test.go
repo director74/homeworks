@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRunCmd(t *testing.T) {
