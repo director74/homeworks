@@ -10,14 +10,16 @@ import (
 
 func TestReadDir(t *testing.T) {
 	t.Run("wrong directory", func(t *testing.T) {
-		_, err := ReadDir("testdata/envv")
+		envs, err := ReadDir("testdata/envv")
 
+		require.Empty(t, envs)
 		require.True(t, errors.Is(err, fs.ErrNotExist))
 	})
 
 	t.Run("empty directory path", func(t *testing.T) {
-		_, err := ReadDir("")
+		envs, err := ReadDir("")
 
+		require.Empty(t, envs)
 		require.Equal(t, err, ErrEmptyDirPath)
 	})
 
@@ -25,11 +27,12 @@ func TestReadDir(t *testing.T) {
 		dir, _ := os.MkdirTemp("/tmp", "env_test")
 		badFile, errTmpFile := os.CreateTemp(dir, "WORLD=")
 
-		_, err := ReadDir(dir)
+		envs, err := ReadDir(dir)
 
 		os.Remove(badFile.Name())
 		errDirRemove := os.Remove(dir)
 
+		require.Empty(t, envs)
 		require.NoError(t, errTmpFile)
 		require.NoError(t, errDirRemove)
 		require.Equal(t, err, ErrForbiddenFileSymbols)

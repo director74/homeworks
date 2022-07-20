@@ -31,5 +31,5 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		}
 	}
 
-	return
+	return 0
 }
