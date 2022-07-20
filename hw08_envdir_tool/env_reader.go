@@ -24,7 +24,7 @@ var (
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
-	result := make(Environment, 0)
+	result := make(Environment)
 
 	if len(dir) == 0 {
 		return nil, ErrEmptyDirPath
