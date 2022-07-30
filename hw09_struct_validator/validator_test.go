@@ -3,6 +3,7 @@ package hw09structvalidator
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -37,11 +38,12 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in interface{}
+		is error
+		as error
 	}{
 		{
-			User{
+			in: User{
 				ID:     "389582290458082048242804112310583152",
 				Name:   "Tod",
 				Age:    49,
@@ -50,20 +52,24 @@ func TestValidate(t *testing.T) {
 				Phones: []string{"89999999999", "89999992999"},
 				meta:   nil,
 			},
-			nil,
+			as: ValidationErrors{},
 		},
 		{
-			App{
+			in: App{
 				Version: "49210",
 			},
-			nil,
+			as: ValidationErrors{},
 		},
 		{
-			Response{
+			in: Response{
 				Code: 200,
 				Body: "",
 			},
-			nil,
+			as: ValidationErrors{},
+		},
+		{
+			in: []string{},
+			is: ErrNotStruct,
 		},
 	}
 
@@ -72,8 +78,12 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			if tt.is != nil {
+				require.ErrorIs(t, err, tt.is)
+			} else {
+				require.ErrorAs(t, err, &tt.as)
+			}
 		})
 	}
 }
