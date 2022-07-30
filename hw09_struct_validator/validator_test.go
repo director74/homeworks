@@ -8,7 +8,6 @@ import (
 
 type UserRole string
 
-// Test the function on different structures and other types.
 type (
 	User struct {
 		ID     string `json:"id" validate:"len:36"`
@@ -42,10 +41,30 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			User{
+				ID:     "389582290458082048242804112310583152",
+				Name:   "Tod",
+				Age:    49,
+				Email:  "demo@localhost.com",
+				Role:   UserRole("stuff"),
+				Phones: []string{"89999999999", "89999992999"},
+				meta:   nil,
+			},
+			nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			App{
+				Version: "49210",
+			},
+			nil,
+		},
+		{
+			Response{
+				Code: 200,
+				Body: "",
+			},
+			nil,
+		},
 	}
 
 	for i, tt := range tests {
