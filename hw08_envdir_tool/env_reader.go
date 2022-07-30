@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -36,18 +37,22 @@ func ReadDir(dir string) (Environment, error) {
 	}
 
 	for _, file := range files {
-		founded := strings.Index(file.Name(), "=")
-		if founded >= 0 {
+		founded := strings.Contains(file.Name(), "=")
+		if founded {
 			return nil, ErrForbiddenFileSymbols
 		}
 
-		curFile, openErr := os.Open(dir + string(os.PathSeparator) + file.Name())
+		curFile, openErr := os.Open(filepath.Join(dir, string(os.PathSeparator), file.Name()))
 		if openErr != nil {
 			return nil, openErr
 		}
 
 		sc := bufio.NewScanner(curFile)
 		success := sc.Scan()
+		err := sc.Err()
+		if err != nil {
+			return nil, err
+		}
 		if success {
 			line := sc.Text()
 			line = strings.TrimRight(line, "\t ")

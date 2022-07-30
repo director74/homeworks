@@ -25,7 +25,7 @@ func TestReadDir(t *testing.T) {
 	})
 
 	t.Run("env name with =", func(t *testing.T) {
-		dir, _ := os.MkdirTemp("/tmp", "env_test")
+		dir, errMkDir := os.MkdirTemp("/tmp", "env_test")
 		badFile, errTmpFile := os.CreateTemp(dir, "WORLD=")
 
 		envs, err := ReadDir(dir)
@@ -34,6 +34,7 @@ func TestReadDir(t *testing.T) {
 		errDirRemove := os.Remove(dir)
 
 		require.Empty(t, envs)
+		require.NoError(t, errMkDir)
 		require.NoError(t, errTmpFile)
 		require.NoError(t, errDirRemove)
 		require.Equal(t, err, ErrForbiddenFileSymbols)
