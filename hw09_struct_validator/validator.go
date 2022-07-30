@@ -31,6 +31,7 @@ type ValidationError struct {
 }
 
 type ValidationErrors []ValidationError
+
 type validationOptions []validationOption
 
 func (v ValidationErrors) Error() string {
@@ -258,22 +259,24 @@ func Validate(v interface{}) error {
 		structFieldType := reflectedStructType.Field(i)
 
 		// Проверять только публичные свойства
-		if structFieldType.Name == strings.Title(structFieldType.Name) {
-			strOptions, needValidate := structFieldType.Tag.Lookup("validate")
-			if needValidate {
-				validator := validator{}
-				errParse := validator.readOptions(strOptions)
-				if errParse == nil {
-					validator.setFieldInfo(structFieldType.Name, structField)
-					errCheckProcess := validator.check()
-					if errCheckProcess != nil {
-						return errCheckProcess
-					}
-					fieldErrors := validator.getValidationErrors()
-					allFieldErrors = append(allFieldErrors, fieldErrors...)
-				} else {
-					return errParse
+		if structFieldType.Name != strings.Title(structFieldType.Name) {
+			continue
+		}
+
+		strOptions, needValidate := structFieldType.Tag.Lookup("validate")
+		if needValidate {
+			validator := validator{}
+			errParse := validator.readOptions(strOptions)
+			if errParse == nil {
+				validator.setFieldInfo(structFieldType.Name, structField)
+				errCheckProcess := validator.check()
+				if errCheckProcess != nil {
+					return errCheckProcess
 				}
+				fieldErrors := validator.getValidationErrors()
+				allFieldErrors = append(allFieldErrors, fieldErrors...)
+			} else {
+				return errParse
 			}
 		}
 	}
