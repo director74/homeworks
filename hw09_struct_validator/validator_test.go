@@ -39,9 +39,9 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in interface{}
-		is error
-		as error
+		in    interface{}
+		is    error
+		equal error
 	}{
 		{
 			in: User{
@@ -53,24 +53,43 @@ func TestValidate(t *testing.T) {
 				Phones: []string{"89999999999", "89999992999"},
 				meta:   nil,
 			},
-			as: ValidationErrors{},
+			equal: ValidationErrors(nil),
 		},
 		{
 			in: App{
 				Version: "49210",
 			},
-			as: ValidationErrors{},
+			equal: ValidationErrors(nil),
 		},
 		{
 			in: Response{
 				Code: 200,
 				Body: "",
 			},
-			as: ValidationErrors{},
+			equal: ValidationErrors(nil),
 		},
 		{
 			in: []string{},
 			is: ErrNotStruct,
+		},
+		{
+			in: User{
+				ID:     "389582290458082",
+				Name:   "Tod",
+				Age:    49,
+				Email:  "demo@localhost.com",
+				Role:   UserRole("stuff"),
+				Phones: []string{"89999999999", "1"},
+				meta:   nil,
+			},
+			is: ErrWrongLen,
+		},
+		{
+			in: Response{
+				Code: 205,
+				Body: "",
+			},
+			is: ErrNotExistIn,
 		},
 	}
 
@@ -80,10 +99,18 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			err := Validate(tt.in)
+
 			if tt.is != nil {
-				require.ErrorIs(t, err, tt.is)
-			} else {
-				require.ErrorAs(t, err, &tt.as)
+				ve, ok := err.(ValidationErrors)
+				if ok {
+					require.ErrorIs(t, ve[0].Err, tt.is)
+				} else {
+					require.ErrorIs(t, err, tt.is)
+				}
+			}
+
+			if tt.equal != nil {
+				require.Equal(t, tt.equal, err)
 			}
 		})
 	}
