@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -39,9 +38,7 @@ func (t *telnetClient) Connect() error {
 func (t *telnetClient) Send() error {
 	nRead, err := t.in.Read(t.inBuf)
 
-	if errors.Is(err, io.EOF) {
-		return fmt.Errorf("...EOF")
-	} else if err != nil {
+	if err != nil {
 		return fmt.Errorf("cannot process input: %w", err)
 	}
 
@@ -60,9 +57,7 @@ func (t *telnetClient) Receive() error {
 		t.responseReader = bufio.NewReader(t.conn)
 	}
 	nRead, err := t.responseReader.Read(t.conBuf)
-	if errors.Is(err, io.EOF) {
-		return fmt.Errorf("...Connection was closed by peer")
-	} else if err != nil {
+	if err != nil {
 		return fmt.Errorf("cannot read response: %w", err)
 	}
 
