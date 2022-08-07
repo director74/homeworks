@@ -34,7 +34,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	defer client.Close()
 
 	go func() {
 		for {
