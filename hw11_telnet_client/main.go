@@ -42,7 +42,7 @@ func main() {
 		defer stop()
 		err := client.Send()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "%v", err)
 		}
 	}()
 
@@ -50,7 +50,7 @@ func main() {
 		defer stop()
 		err := client.Receive()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "%v", err)
 		}
 	}()
 
