@@ -75,6 +75,6 @@ func TestTelnetClient(t *testing.T) {
 	t.Run("bad port", func(t *testing.T) {
 		client := NewTelnetClient(".", 1, nil, nil)
 		err := client.Connect()
-		require.Equal(t, err.Error(), "Cannot connect: dial tcp: address .: missing port in address")
+		require.Equal(t, err.Error(), "cannot connect: dial tcp: address .: missing port in address")
 	})
 }

@@ -26,7 +26,6 @@ func main() {
 		fmt.Println(ErrNotEnoughArguments)
 		return
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 
 	client := NewTelnetClient(net.JoinHostPort(args[0], args[1]), timeout, os.Stdin, os.Stdout)
 
@@ -36,26 +35,23 @@ func main() {
 	}
 	defer client.Close()
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	go func() {
-		for {
-			err := client.Send()
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
+		defer stop()
+		err := client.Send()
+		if err != nil {
+			fmt.Println(err)
 		}
-		stop()
 	}()
 
 	go func() {
-		for {
-			err := client.Receive()
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
+		defer stop()
+		err := client.Receive()
+		if err != nil {
+			fmt.Println(err)
 		}
-		stop()
 	}()
 
 	<-ctx.Done()
