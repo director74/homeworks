@@ -2,15 +2,15 @@ goos: linux
 goarch: amd64
 pkg: github.com/director74/homeworks/hw10_program_optimization
 cpu: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
-BenchmarkGetDomainStat-3   	     169	   6843150 ns/op	   26888 B/op	     862 allocs/op
-BenchmarkGetDomainStat-3   	     165	   6941935 ns/op	   27434 B/op	     883 allocs/op
-BenchmarkGetDomainStat-3   	     166	   6934452 ns/op	   27291 B/op	     877 allocs/op
-BenchmarkGetDomainStat-3   	     166	   6908930 ns/op	   27298 B/op	     877 allocs/op
-BenchmarkGetDomainStat-3   	     166	   6955944 ns/op	   27296 B/op	     877 allocs/op
-BenchmarkGetDomainStat-3   	     165	   6942230 ns/op	   27435 B/op	     883 allocs/op
-BenchmarkGetDomainStat-3   	     166	   7006348 ns/op	   27288 B/op	     877 allocs/op
-BenchmarkGetDomainStat-3   	     165	   6895671 ns/op	   27438 B/op	     883 allocs/op
-BenchmarkGetDomainStat-3   	     166	   6937505 ns/op	   27293 B/op	     877 allocs/op
-BenchmarkGetDomainStat-3   	     166	   6968757 ns/op	   27291 B/op	     877 allocs/op
+BenchmarkGetDomainStat-3   	 1534323	       745.7 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1517192	       741.8 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1473321	       789.5 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1368063	       839.5 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1388594	       772.4 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1423017	       937.3 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1286006	       836.5 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1461162	       807.0 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1456177	       818.2 ns/op	    4146 B/op	       2 allocs/op
+BenchmarkGetDomainStat-3   	 1341504	       830.7 ns/op	    4146 B/op	       2 allocs/op
 PASS
-ok  	github.com/director74/homeworks/hw10_program_optimization	28.564s
+ok  	github.com/director74/homeworks/hw10_program_optimization	32.456s

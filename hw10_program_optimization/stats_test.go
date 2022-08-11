@@ -54,7 +54,7 @@ func TestGetDomainStat(t *testing.T) {
 	t.Run("broken json", func(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data3), "com")
 		require.ErrorIs(t, err, io.EOF)
-		require.Equal(t, DomainStat(nil), result)
+		require.Equal(t, DomainStat{}, result)
 	})
 }
 
