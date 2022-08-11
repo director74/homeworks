@@ -59,10 +59,15 @@ func TestGetDomainStat(t *testing.T) {
 }
 
 func BenchmarkGetDomainStat(b *testing.B) {
-	r, _ := zip.OpenReader("testdata/users.dat.zip")
-	data, _ := r.File[0].Open()
+	b.StopTimer()
+	r, unzipErr := zip.OpenReader("testdata/users.dat.zip")
+	data, openErr := r.File[0].Open()
+	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		GetDomainStat(data, "biz")
 	}
+	b.StopTimer()
 	r.Close()
+	require.NoError(b, unzipErr)
+	require.NoError(b, openErr)
 }
