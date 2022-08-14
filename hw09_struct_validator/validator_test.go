@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
 
-// Test the function on different structures and other types.
 type (
 	User struct {
 		ID     string `json:"id" validate:"len:36"`
@@ -38,14 +39,39 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in interface{}
+		is error
+		as error
 	}{
 		{
-			// Place your code here.
+			in: User{
+				ID:     "389582290458082048242804112310583152",
+				Name:   "Tod",
+				Age:    49,
+				Email:  "demo@localhost.com",
+				Role:   UserRole("stuff"),
+				Phones: []string{"89999999999", "89999992999"},
+				meta:   nil,
+			},
+			as: ValidationErrors{},
 		},
-		// ...
-		// Place your code here.
+		{
+			in: App{
+				Version: "49210",
+			},
+			as: ValidationErrors{},
+		},
+		{
+			in: Response{
+				Code: 200,
+				Body: "",
+			},
+			as: ValidationErrors{},
+		},
+		{
+			in: []string{},
+			is: ErrNotStruct,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +79,12 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			if tt.is != nil {
+				require.ErrorIs(t, err, tt.is)
+			} else {
+				require.ErrorAs(t, err, &tt.as)
+			}
 		})
 	}
 }
