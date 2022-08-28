@@ -1,0 +1,10 @@
+logger:
+  level: "INFO"
+database:
+  user: "postgres"
+  pass: "mzPk2EJJP"
+server:
+  host: localhost
+  port: 8080
+app:
+  storageType: "sql"
