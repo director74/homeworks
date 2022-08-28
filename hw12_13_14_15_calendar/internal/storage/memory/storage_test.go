@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	gofake "github.com/brianvoe/gofakeit/v6"
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -149,13 +149,13 @@ func TestStorage_Add(t *testing.T) {
 
 func prepareItem(num int) (storage.Event, error) {
 	fEvent := storage.Event{}
-	errFacker := gofakeit.Struct(&fEvent)
+	errFacker := gofake.Struct(&fEvent)
 	fEvent.Description = sql.NullString{
-		String: gofakeit.Sentence(20),
+		String: gofake.Sentence(20),
 		Valid:  true,
 	}
 	fEvent.NotificationInterval = sql.NullInt16{
-		Int16: int16(gofakeit.IntRange(1, 65535)),
+		Int16: int16(gofake.IntRange(1, 65535)),
 		Valid: true,
 	}
 	fEvent.DateStart = time.Now().Add(time.Minute * time.Duration(num))
