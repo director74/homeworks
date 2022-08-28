@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage"
+	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 )
 

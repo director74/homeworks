@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/cfg"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/app"
+	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/cfg"
+	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/director74/homeworks/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
