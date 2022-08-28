@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	yml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -47,7 +47,7 @@ func (c *Config) Parse(path string) error {
 		return fmt.Errorf("reading %v error: %w", path, err)
 	}
 
-	err = yaml.Unmarshal(configYml, c)
+	err = yml.Unmarshal(configYml, c)
 	if err != nil {
 		return fmt.Errorf("can't parse %v: %w", path, err)
 	}
