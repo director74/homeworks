@@ -7,7 +7,7 @@ import (
 
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/cfg"
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
-	_ "github.com/jackc/pgx/stdlib" // linter said that need comment
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -34,9 +34,7 @@ func (s *Storage) Connect(ctx context.Context, params cfg.DatabaseConf) (err err
 	return nil
 }
 
-// TODO Как здесь использовать контекст?
-
-func (s *Storage) Close(ctx context.Context) error {
+func (s *Storage) Close() error {
 	if err := s.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
 	}
@@ -94,15 +92,46 @@ func (s *Storage) Edit(i int64, event storage.Event) error {
 }
 
 func (s *Storage) Delete(i int64) error {
-	_, err := s.conn.Exec(`DELETE FROM events WHERE "ID" = $1`, i)
+	var deletedCount int
+
+	res, err := s.conn.Query(`WITH deleted AS 
+    	(DELETE FROM events WHERE "ID" = $1 RETURNING *) SELECT count(*) FROM deleted;`, i)
 	if err != nil {
 		return fmt.Errorf("failed to delete record: %w", err)
+	}
+	defer res.Close()
+
+	for res.Next() {
+		err = res.Scan(&deletedCount)
+		if err != nil {
+			return fmt.Errorf("failed to scan result: %w", err)
+		}
+	}
+
+	if deletedCount < 1 {
+		return storage.ErrDeleteNotFound
 	}
 
 	return nil
 }
 
+func (s *Storage) GetByID(id int64) (storage.Event, error) {
+	event := storage.Event{}
+	err := s.conn.Get(&event, `SELECT * FROM events WHERE "ID"=$1`, id)
+	if err != nil {
+		return storage.Event{}, fmt.Errorf("failed to get event: %w", err)
+	}
+	if event.ID == 0 {
+		return storage.Event{}, storage.ErrEventNotFound
+	}
+
+	return event, nil
+}
+
 func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
+	if date == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, date, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -114,6 +143,9 @@ func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
 }
 
 func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) {
+	if weekBeginDate == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, weekBeginDate, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -125,6 +157,9 @@ func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) 
 }
 
 func (s *Storage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error) {
+	if monthBeginDate == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, monthBeginDate, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -155,11 +190,17 @@ func (s *Storage) validate(event storage.Event) error {
 	if event.Title == "" {
 		return storage.ErrWrongTitle
 	}
+	if event.UserID == 0 {
+		return storage.ErrWrongUserID
+	}
 	if event.DateStart.Before(time.Now()) {
 		return storage.ErrWrongDateStart
 	}
 	if event.DateEnd.Before(event.DateStart) {
 		return storage.ErrWrongDateEnd
+	}
+	if event.DateStart == event.DateEnd {
+		return storage.ErrSameDates
 	}
 	if s.checkBusy(event.DateStart, event.DateEnd, event.ID) {
 		return storage.ErrDateBusy

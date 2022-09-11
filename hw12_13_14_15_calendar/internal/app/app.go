@@ -1,8 +1,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/cfg"
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
 )
@@ -10,16 +8,18 @@ import (
 type App struct {
 	logger  Logger
 	storage Storage
-	config  cfg.Config
+	config  cfg.Configurable
 }
 
 type Logger interface {
 	Info(string)
+	Infof(msg string, args ...interface{})
 	Error(string)
 	Warn(string)
 	Debug(string)
 }
 
+//go:generate mockgen -source=./internal/app/app.go --destination=./test/mocks/app/app.go
 type Storage interface {
 	Add(storage.Event) (int64, error)
 	Edit(int64, storage.Event) error
@@ -27,9 +27,10 @@ type Storage interface {
 	ListEventsDay(date string) ([]storage.Event, error)
 	ListEventsWeek(weekBeginDate string) ([]storage.Event, error)
 	ListEventsMonth(monthBeginDate string) ([]storage.Event, error)
+	GetByID(int64) (storage.Event, error)
 }
 
-func New(logger Logger, storage Storage, config cfg.Config) *App {
+func New(logger Logger, storage Storage, config cfg.Configurable) *App {
 	return &App{
 		logger:  logger,
 		storage: storage,
@@ -37,14 +38,14 @@ func New(logger Logger, storage Storage, config cfg.Config) *App {
 	}
 }
 
-func (a *App) GetServerConf() cfg.ServerConf {
-	return a.config.Server
+func (a *App) GetHTTPServerConf() cfg.HTTPServerConf {
+	return a.config.GetServersConf().HTTP
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func (a *App) GetGRPCServerConf() cfg.GRPCServerConf {
+	return a.config.GetServersConf().GRPC
 }
 
-// TODO
+func (a *App) GetStorage() Storage {
+	return a.storage
+}

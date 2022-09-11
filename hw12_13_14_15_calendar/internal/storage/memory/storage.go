@@ -59,7 +59,22 @@ func (s *Storage) Delete(i int64) error {
 	return nil
 }
 
+func (s *Storage) GetByID(id int64) (storage.Event, error) {
+	s.mu.RLock()
+	event, ok := s.events[id]
+	s.mu.RUnlock()
+
+	if ok {
+		return event, nil
+	}
+
+	return storage.Event{}, storage.ErrEventNotFound
+}
+
 func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
+	if date == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, date, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -71,6 +86,9 @@ func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
 }
 
 func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) {
+	if weekBeginDate == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, weekBeginDate, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -82,6 +100,9 @@ func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) 
 }
 
 func (s *Storage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error) {
+	if monthBeginDate == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, monthBeginDate, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -115,11 +136,17 @@ func (s *Storage) validate(event storage.Event) error {
 	if event.Title == "" {
 		return storage.ErrWrongTitle
 	}
+	if event.UserID == 0 {
+		return storage.ErrWrongUserID
+	}
 	if event.DateStart.Before(time.Now()) {
 		return storage.ErrWrongDateStart
 	}
 	if event.DateEnd.Before(event.DateStart) {
 		return storage.ErrWrongDateEnd
+	}
+	if event.DateStart == event.DateEnd {
+		return storage.ErrSameDates
 	}
 	if s.checkBusy(event.DateStart, event.DateEnd, event.ID) {
 		return storage.ErrDateBusy

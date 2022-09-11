@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/app"
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -19,7 +20,7 @@ func (w *statusWriter) WriteHeader(status int) {
 	w.ResponseWriter.WriteHeader(status)
 }
 
-func loggingMiddleware(next http.Handler, logg Logger) http.Handler {
+func loggingMiddleware(next http.Handler, logg app.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		sw := statusWriter{ResponseWriter: w}
