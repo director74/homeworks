@@ -311,6 +311,8 @@ func (s *Server) writeResponse(w http.ResponseWriter, resp *Response) {
 }
 
 func (s *Server) convertRequestEvent(storageEvent storage.Event, event *EventRequest) storage.Event {
+	storageEvent.ID = event.ID
+
 	if event.Title != nil {
 		storageEvent.Title = *event.Title
 	}
