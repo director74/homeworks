@@ -12,10 +12,19 @@ const (
 	SQLStorage    = "sql"
 )
 
+//go:generate mockgen -source=./internal/cfg/config.go --destination=./test/mocks/cfg/config.go
+type Configurable interface {
+	Parse(path string) error
+	GetLoggerConf() LoggerConf
+	GetDBConf() DatabaseConf
+	GetServersConf() ServersConf
+	GetAppConf() AppConf
+}
+
 type Config struct {
 	Logger   LoggerConf
 	Database DatabaseConf
-	Server   ServerConf
+	Servers  ServersConf
 	App      AppConf
 }
 
@@ -27,7 +36,17 @@ type AppConf struct {
 	StorageType string `yaml:"storageType"`
 }
 
-type ServerConf struct {
+type ServersConf struct {
+	HTTP HTTPServerConf `yaml:"http"`
+	GRPC GRPCServerConf `yaml:"grpc"`
+}
+
+type HTTPServerConf struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
+}
+
+type GRPCServerConf struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }
@@ -37,8 +56,8 @@ type DatabaseConf struct {
 	Password string `yaml:"pass"`
 }
 
-func NewConfig() Config {
-	return Config{}
+func NewConfig() Configurable {
+	return &Config{}
 }
 
 func (c *Config) Parse(path string) error {
@@ -53,4 +72,20 @@ func (c *Config) Parse(path string) error {
 	}
 
 	return nil
+}
+
+func (c *Config) GetLoggerConf() LoggerConf {
+	return c.Logger
+}
+
+func (c *Config) GetDBConf() DatabaseConf {
+	return c.Database
+}
+
+func (c *Config) GetServersConf() ServersConf {
+	return c.Servers
+}
+
+func (c *Config) GetAppConf() AppConf {
+	return c.App
 }

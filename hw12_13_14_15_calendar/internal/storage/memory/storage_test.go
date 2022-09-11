@@ -154,8 +154,8 @@ func prepareItem(num int) (storage.Event, error) {
 		String: gofake.Sentence(20),
 		Valid:  true,
 	}
-	fEvent.NotificationInterval = sql.NullInt16{
-		Int16: int16(gofake.IntRange(1, 65535)),
+	fEvent.NotificationInterval = sql.NullInt32{
+		Int32: int32(gofake.IntRange(1, 4294967296)),
 		Valid: true,
 	}
 	fEvent.DateStart = time.Now().Add(time.Minute * time.Duration(num))
