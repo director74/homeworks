@@ -3,6 +3,7 @@ package internalhttp
 import (
 	"bufio"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -33,7 +34,7 @@ func TestNewServer(t *testing.T) {
 	s := NewServer(mockLog, apl)
 
 	t.Run("Check success add", func(t *testing.T) {
-		element, errPrepare := prepareItem(10)
+		element, errPrepare := prepareEventRequest(10)
 		require.NoError(t, errPrepare)
 		jsonEvent, errMarshal := json.Marshal(&element)
 		require.NoError(t, errMarshal)
@@ -91,18 +92,15 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check edit", func(t *testing.T) {
-		sEvent := storage.Event{
-			ID:        1,
-			Title:     "One",
-			DateStart: time.Now(),
-			DateEnd:   time.Now().Add(time.Minute * 5),
-		}
-		mockStorage.EXPECT().GetByID(int64(1)).Return(sEvent, nil).Times(1)
-		sEvent.Title = "Test"
-		mockStorage.EXPECT().Edit(int64(1), sEvent).Return(nil).Times(1)
+		sEvent, err := prepareStorageEvent("2022-10-01", 1)
+		require.NoError(t, err)
+		updatedEvent := sEvent
+		mockStorage.EXPECT().GetByID(sEvent.ID).Return(sEvent, nil).Times(1)
+		updatedEvent.Title = "Test"
+		mockStorage.EXPECT().Edit(sEvent.ID, updatedEvent).Return(nil).Times(1)
 
 		title := "Test"
-		jsonEvent, errMarshal := json.Marshal(&EventRequest{ID: 1, Title: &title})
+		jsonEvent, errMarshal := json.Marshal(&EventRequest{ID: sEvent.ID, Title: &title})
 		require.NoError(t, errMarshal)
 
 		req := httptest.NewRequest(http.MethodPost, "/edit/", bytes.NewReader(jsonEvent))
@@ -125,7 +123,7 @@ func TestNewServer(t *testing.T) {
 	t.Run("Check edit not found", func(t *testing.T) {
 		mockStorage.EXPECT().GetByID(int64(0)).Return(storage.Event{}, storage.ErrEventNotFound).Times(1)
 
-		title := "Test"
+		title := "Edit title"
 		jsonEvent, errMarshal := json.Marshal(&EventRequest{ID: 0, Title: &title})
 		require.NoError(t, errMarshal)
 
@@ -193,9 +191,107 @@ func TestNewServer(t *testing.T) {
 		require.Equal(t, "", response)
 		require.Equal(t, http.StatusOK, result.StatusCode)
 	})
+
+	t.Run("Check ListEventsDay", func(t *testing.T) {
+		date := "2022-10-01"
+		sEvent, err := prepareStorageEvent(date, 1)
+		require.NoError(t, err)
+		mockStorage.EXPECT().ListEventsDay(date).Return([]storage.Event{sEvent}, nil).Times(1)
+
+		req := httptest.NewRequest(http.MethodGet, "/listeventsday/?date="+date, nil)
+		req.Header.Set("accept", "application/json")
+		w := httptest.NewRecorder()
+		s.listEventsDay(w, req)
+
+		result := w.Result()
+		defer result.Body.Close()
+
+		response := &Response{}
+		response.Data = &ListResponse{}
+
+		errDecode := json.NewDecoder(result.Body).Decode(response)
+		require.NoError(t, errDecode)
+
+		listResponse, ok := response.Data.(*ListResponse)
+		if !ok {
+			listResponse = &ListResponse{}
+		}
+
+		require.Equal(t, response.Error.Message, "")
+		require.Equal(t, sEvent, s.convertRequestEvent(storage.Event{}, &listResponse.Events[0]))
+		require.Equal(t, http.StatusOK, result.StatusCode)
+	})
+
+	t.Run("Check ListEventsWeek", func(t *testing.T) {
+		date := "2022-10-01"
+		date2 := "2022-10-06"
+		sEvent1, err := prepareStorageEvent(date, 1)
+		require.NoError(t, err)
+		sEvent2, err := prepareStorageEvent(date2, 1)
+		require.NoError(t, err)
+		mockStorage.EXPECT().ListEventsWeek(date).Return([]storage.Event{sEvent1, sEvent2}, nil).Times(1)
+
+		req := httptest.NewRequest(http.MethodGet, "/listeventsweek/?weekBeginDate="+date, nil)
+		req.Header.Set("accept", "application/json")
+		w := httptest.NewRecorder()
+		s.listEventsWeek(w, req)
+
+		result := w.Result()
+		defer result.Body.Close()
+
+		response := &Response{}
+		response.Data = &ListResponse{}
+
+		errDecode := json.NewDecoder(result.Body).Decode(response)
+		require.NoError(t, errDecode)
+
+		listResponse, ok := response.Data.(*ListResponse)
+		if !ok {
+			listResponse = &ListResponse{}
+		}
+
+		require.Equal(t, response.Error.Message, "")
+		require.Equal(t, sEvent1, s.convertRequestEvent(storage.Event{}, &listResponse.Events[0]))
+		require.Equal(t, sEvent2, s.convertRequestEvent(storage.Event{}, &listResponse.Events[1]))
+		require.Equal(t, http.StatusOK, result.StatusCode)
+	})
+
+	t.Run("Check ListEventsMonth", func(t *testing.T) {
+		date := "2022-10-01"
+		date2 := "2022-10-30"
+		sEvent1, err := prepareStorageEvent(date, 1)
+		require.NoError(t, err)
+		sEvent2, err := prepareStorageEvent(date2, 1)
+		require.NoError(t, err)
+		mockStorage.EXPECT().ListEventsMonth(date).Return([]storage.Event{sEvent1, sEvent2}, nil).Times(1)
+
+		req := httptest.NewRequest(http.MethodGet, "/listeventsmonth/?monthBeginDate="+date, nil)
+		req.Header.Set("accept", "application/json")
+		w := httptest.NewRecorder()
+		s.listEventsMonth(w, req)
+
+		result := w.Result()
+		defer result.Body.Close()
+
+		response := &Response{}
+		response.Data = &ListResponse{}
+
+		errDecode := json.NewDecoder(result.Body).Decode(response)
+		require.NoError(t, errDecode)
+
+		listResponse, ok := response.Data.(*ListResponse)
+		if !ok {
+			listResponse = &ListResponse{}
+		}
+
+		require.Equal(t, response.Error.Message, "")
+		require.Equal(t, sEvent1, s.convertRequestEvent(storage.Event{}, &listResponse.Events[0]))
+		require.Equal(t, sEvent2, s.convertRequestEvent(storage.Event{}, &listResponse.Events[1]))
+		require.Equal(t, http.StatusOK, result.StatusCode)
+	})
 }
 
-func prepareItem(addMinutes int) (EventRequest, error) {
+func prepareEventRequest(addMinutes int) (EventRequest, error) {
 	evRequest := EventRequest{}
 	errFacker := gofake.Struct(&evRequest)
 
@@ -203,4 +299,28 @@ func prepareItem(addMinutes int) (EventRequest, error) {
 	*evRequest.DateEnd = time.Now().Add(time.Minute * time.Duration(1+addMinutes)).Format(storage.DateTimeFormatISO)
 
 	return evRequest, errFacker
+}
+
+func prepareStorageEvent(date string, num int) (storage.Event, error) {
+	fEvent := storage.Event{}
+	errFacker := gofake.Struct(&fEvent)
+	if errFacker != nil {
+		return storage.Event{}, errFacker
+	}
+	fEvent.Description = sql.NullString{
+		String: gofake.Sentence(20),
+		Valid:  true,
+	}
+	fEvent.NotificationInterval = sql.NullInt32{
+		Int32: int32(gofake.IntRange(1, 4294967296)),
+		Valid: true,
+	}
+	dt, err := time.ParseInLocation(storage.DateFormatISO, date, time.Local)
+	if err != nil {
+		return storage.Event{}, err
+	}
+	fEvent.DateStart = dt.Add(time.Minute * time.Duration(num))
+	fEvent.DateEnd = dt.Add(time.Minute * time.Duration(num+1))
+
+	return fEvent, errFacker
 }
