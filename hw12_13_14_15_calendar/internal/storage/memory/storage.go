@@ -1,14 +1,145 @@
 package memorystorage
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
+)
 
 type Storage struct {
-	// TODO
-	mu sync.RWMutex
+	events map[int64]storage.Event
+	mu     sync.RWMutex
+	lastID int64
 }
 
 func New() *Storage {
-	return &Storage{}
+	return &Storage{
+		events: make(map[int64]storage.Event),
+	}
 }
 
-// TODO
+func (s *Storage) Add(event storage.Event) (int64, error) {
+	if err := s.validate(event); err != nil {
+		return 0, err
+	}
+	s.mu.Lock()
+	newIndex := s.lastID + 1
+	event.ID = newIndex
+	s.events[newIndex] = event
+	s.lastID = newIndex
+	s.mu.Unlock()
+
+	return newIndex, nil
+}
+
+func (s *Storage) Edit(i int64, event storage.Event) error {
+	if err := s.validate(event); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.events[i]; !ok {
+		return fmt.Errorf("element %v doesnt exist", i)
+	}
+	s.events[i] = event
+
+	return nil
+}
+
+func (s *Storage) Delete(i int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.events[i]; !ok {
+		return fmt.Errorf("element %v doesnt exist", i)
+	}
+	delete(s.events, i)
+
+	return nil
+}
+
+func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
+	dt, err := time.ParseInLocation(storage.DateFormatISO, date, time.Local)
+	if err != nil {
+		return nil, fmt.Errorf("wrong date format: %w", err)
+	}
+
+	dt2 := dt.Add(time.Hour * 23).Add(time.Minute * 59).Add(time.Second * 59)
+
+	return s.listByDates(dt, dt2)
+}
+
+func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) {
+	dt, err := time.ParseInLocation(storage.DateFormatISO, weekBeginDate, time.Local)
+	if err != nil {
+		return nil, fmt.Errorf("wrong date format: %w", err)
+	}
+
+	dt2 := dt.AddDate(0, 0, 6).Add(time.Hour * 23).Add(time.Minute * 59).Add(time.Second * 59)
+
+	return s.listByDates(dt, dt2)
+}
+
+func (s *Storage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error) {
+	dt, err := time.ParseInLocation(storage.DateFormatISO, monthBeginDate, time.Local)
+	if err != nil {
+		return nil, fmt.Errorf("wrong date format: %w", err)
+	}
+
+	dt2 := dt.AddDate(0, 1, -dt.Day())
+
+	return s.listByDates(dt, dt2)
+}
+
+func (s *Storage) listByDates(dt time.Time, dt2 time.Time) ([]storage.Event, error) {
+	events := make([]storage.Event, 0)
+
+	s.mu.RLock()
+	for _, event := range s.events {
+		if (event.DateStart.After(dt) && event.DateStart.Before(dt2)) ||
+			(event.DateEnd.After(dt) && event.DateEnd.Before(dt2)) ||
+			event.DateStart.Equal(dt) ||
+			event.DateStart.Equal(dt2) ||
+			event.DateEnd.Equal(dt) ||
+			event.DateEnd.Equal(dt2) {
+			events = append(events, event)
+		}
+	}
+	s.mu.RUnlock()
+
+	return events, nil
+}
+
+func (s *Storage) validate(event storage.Event) error {
+	if event.Title == "" {
+		return storage.ErrWrongTitle
+	}
+	if event.DateStart.Before(time.Now()) {
+		return storage.ErrWrongDateStart
+	}
+	if event.DateEnd.Before(event.DateStart) {
+		return storage.ErrWrongDateEnd
+	}
+	if s.checkBusy(event.DateStart, event.DateEnd, event.ID) {
+		return storage.ErrDateBusy
+	}
+	return nil
+}
+
+func (s *Storage) checkBusy(dateStart time.Time, dateEnd time.Time, id int64) bool {
+	events, _ := s.listByDates(dateStart, dateEnd)
+	if len(events) > 0 {
+		for _, founded := range events {
+			if founded.ID != id {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (s *Storage) count() int {
+	return len(s.events)
+}
