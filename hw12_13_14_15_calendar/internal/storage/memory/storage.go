@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Add(event storage.Event) (int64, error) {
+func (s *Storage) Add(ctx context.Context, event storage.Event) (int64, error) {
 	if err := s.validate(event); err != nil {
 		return 0, err
 	}
@@ -34,7 +35,7 @@ func (s *Storage) Add(event storage.Event) (int64, error) {
 	return newIndex, nil
 }
 
-func (s *Storage) Edit(i int64, event storage.Event) error {
+func (s *Storage) Edit(ctx context.Context, i int64, event storage.Event) error {
 	if err := s.validate(event); err != nil {
 		return err
 	}
@@ -48,7 +49,7 @@ func (s *Storage) Edit(i int64, event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) Delete(i int64) error {
+func (s *Storage) Delete(ctx context.Context, i int64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.events[i]; !ok {
@@ -71,7 +72,7 @@ func (s *Storage) GetByID(id int64) (storage.Event, error) {
 	return storage.Event{}, storage.ErrEventNotFound
 }
 
-func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
+func (s *Storage) ListEventsDay(ctx context.Context, date string) ([]storage.Event, error) {
 	if date == "" {
 		return nil, storage.ErrEmptyDate
 	}
@@ -85,7 +86,7 @@ func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
 	return s.listByDates(dt, dt2)
 }
 
-func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) {
+func (s *Storage) ListEventsWeek(ctx context.Context, weekBeginDate string) ([]storage.Event, error) {
 	if weekBeginDate == "" {
 		return nil, storage.ErrEmptyDate
 	}
@@ -99,7 +100,7 @@ func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) 
 	return s.listByDates(dt, dt2)
 }
 
-func (s *Storage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error) {
+func (s *Storage) ListEventsMonth(ctx context.Context, monthBeginDate string) ([]storage.Event, error) {
 	if monthBeginDate == "" {
 		return nil, storage.ErrEmptyDate
 	}

@@ -3,6 +3,7 @@ package internalhttp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"io"
@@ -27,11 +28,14 @@ func TestNewServer(t *testing.T) {
 	mockLog := mock_app.NewMockLogger(ctrl)
 	mockStorage := mock_app.NewMockStorage(ctrl)
 	mockConfig := mock_cfg.NewMockConfigurable(ctrl)
+	ctx := context.Background()
 
 	mockConfig.EXPECT().GetServersConf().Return(cfg.ServersConf{GRPC: cfg.GRPCServerConf{}, HTTP: cfg.HTTPServerConf{}})
 
 	apl := app.New(mockLog, mockStorage, mockConfig)
 	s := NewServer(mockLog, apl)
+
+	const beginDate = "2022-10-01"
 
 	t.Run("Check success add", func(t *testing.T) {
 		element, errPrepare := prepareEventRequest(10)
@@ -39,7 +43,7 @@ func TestNewServer(t *testing.T) {
 		jsonEvent, errMarshal := json.Marshal(&element)
 		require.NoError(t, errMarshal)
 
-		mockStorage.EXPECT().Add(s.convertRequestEvent(storage.Event{}, &element)).Return(int64(1), nil).Times(1)
+		mockStorage.EXPECT().Add(ctx, s.convertRequestEvent(storage.Event{}, &element)).Return(int64(1), nil).Times(1)
 
 		req := httptest.NewRequest(http.MethodPost, "/add/", bytes.NewReader(jsonEvent))
 		req.Header.Set("Content-Type", "application/json")
@@ -67,7 +71,7 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check fail add", func(t *testing.T) {
-		mockStorage.EXPECT().Add(storage.Event{}).Return(int64(0), storage.ErrWrongTitle).Times(1)
+		mockStorage.EXPECT().Add(ctx, storage.Event{}).Return(int64(0), storage.ErrWrongTitle).Times(1)
 
 		jsonEvent, errMarshal := json.Marshal(&EventRequest{})
 		require.NoError(t, errMarshal)
@@ -92,12 +96,12 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check edit", func(t *testing.T) {
-		sEvent, err := prepareStorageEvent("2022-10-01", 1)
+		sEvent, err := prepareStorageEvent(beginDate)
 		require.NoError(t, err)
 		updatedEvent := sEvent
 		mockStorage.EXPECT().GetByID(sEvent.ID).Return(sEvent, nil).Times(1)
 		updatedEvent.Title = "Test"
-		mockStorage.EXPECT().Edit(sEvent.ID, updatedEvent).Return(nil).Times(1)
+		mockStorage.EXPECT().Edit(ctx, sEvent.ID, updatedEvent).Return(nil).Times(1)
 
 		title := "Test"
 		jsonEvent, errMarshal := json.Marshal(&EventRequest{ID: sEvent.ID, Title: &title})
@@ -170,7 +174,7 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check delete", func(t *testing.T) {
-		mockStorage.EXPECT().Delete(gomock.Any()).Return(nil).Times(1)
+		mockStorage.EXPECT().Delete(ctx, gomock.Any()).Return(nil).Times(1)
 
 		jsonEvent, errMarshal := json.Marshal(&DeleteRequest{ID: 15})
 		require.NoError(t, errMarshal)
@@ -193,12 +197,11 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check ListEventsDay", func(t *testing.T) {
-		date := "2022-10-01"
-		sEvent, err := prepareStorageEvent(date, 1)
+		sEvent, err := prepareStorageEvent(beginDate)
 		require.NoError(t, err)
-		mockStorage.EXPECT().ListEventsDay(date).Return([]storage.Event{sEvent}, nil).Times(1)
+		mockStorage.EXPECT().ListEventsDay(ctx, beginDate).Return([]storage.Event{sEvent}, nil).Times(1)
 
-		req := httptest.NewRequest(http.MethodGet, "/listeventsday/?date="+date, nil)
+		req := httptest.NewRequest(http.MethodGet, "/listeventsday/?date="+beginDate, nil)
 		req.Header.Set("accept", "application/json")
 		w := httptest.NewRecorder()
 		s.listEventsDay(w, req)
@@ -223,15 +226,14 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check ListEventsWeek", func(t *testing.T) {
-		date := "2022-10-01"
 		date2 := "2022-10-06"
-		sEvent1, err := prepareStorageEvent(date, 1)
+		sEvent1, err := prepareStorageEvent(beginDate)
 		require.NoError(t, err)
-		sEvent2, err := prepareStorageEvent(date2, 1)
+		sEvent2, err := prepareStorageEvent(date2)
 		require.NoError(t, err)
-		mockStorage.EXPECT().ListEventsWeek(date).Return([]storage.Event{sEvent1, sEvent2}, nil).Times(1)
+		mockStorage.EXPECT().ListEventsWeek(ctx, beginDate).Return([]storage.Event{sEvent1, sEvent2}, nil).Times(1)
 
-		req := httptest.NewRequest(http.MethodGet, "/listeventsweek/?weekBeginDate="+date, nil)
+		req := httptest.NewRequest(http.MethodGet, "/listeventsweek/?weekBeginDate="+beginDate, nil)
 		req.Header.Set("accept", "application/json")
 		w := httptest.NewRecorder()
 		s.listEventsWeek(w, req)
@@ -257,15 +259,14 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("Check ListEventsMonth", func(t *testing.T) {
-		date := "2022-10-01"
 		date2 := "2022-10-30"
-		sEvent1, err := prepareStorageEvent(date, 1)
+		sEvent1, err := prepareStorageEvent(beginDate)
 		require.NoError(t, err)
-		sEvent2, err := prepareStorageEvent(date2, 1)
+		sEvent2, err := prepareStorageEvent(date2)
 		require.NoError(t, err)
-		mockStorage.EXPECT().ListEventsMonth(date).Return([]storage.Event{sEvent1, sEvent2}, nil).Times(1)
+		mockStorage.EXPECT().ListEventsMonth(ctx, beginDate).Return([]storage.Event{sEvent1, sEvent2}, nil).Times(1)
 
-		req := httptest.NewRequest(http.MethodGet, "/listeventsmonth/?monthBeginDate="+date, nil)
+		req := httptest.NewRequest(http.MethodGet, "/listeventsmonth/?monthBeginDate="+beginDate, nil)
 		req.Header.Set("accept", "application/json")
 		w := httptest.NewRecorder()
 		s.listEventsMonth(w, req)
@@ -301,7 +302,7 @@ func prepareEventRequest(addMinutes int) (EventRequest, error) {
 	return evRequest, errFacker
 }
 
-func prepareStorageEvent(date string, num int) (storage.Event, error) {
+func prepareStorageEvent(date string) (storage.Event, error) {
 	fEvent := storage.Event{}
 	errFacker := gofake.Struct(&fEvent)
 	if errFacker != nil {
@@ -319,8 +320,8 @@ func prepareStorageEvent(date string, num int) (storage.Event, error) {
 	if err != nil {
 		return storage.Event{}, err
 	}
-	fEvent.DateStart = dt.Add(time.Minute * time.Duration(num))
-	fEvent.DateEnd = dt.Add(time.Minute * time.Duration(num+1))
+	fEvent.DateStart = dt.Add(time.Minute * time.Duration(1))
+	fEvent.DateEnd = dt.Add(time.Minute * time.Duration(2))
 
 	return fEvent, errFacker
 }

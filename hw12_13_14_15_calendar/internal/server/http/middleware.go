@@ -1,7 +1,7 @@
 package internalhttp
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -28,7 +28,7 @@ func loggingMiddleware(next http.Handler, logg app.Logger) http.Handler {
 		rqDuration := time.Since(start).Seconds()
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			log.Fatalf("userip: %q is not IP:port", r.RemoteAddr)
+			logg.Error(fmt.Sprintf("userip: %q is not IP:port", r.RemoteAddr))
 		}
 
 		logg.Infof("%s [%s] %s %s %s %d %f \"%s\"\n",

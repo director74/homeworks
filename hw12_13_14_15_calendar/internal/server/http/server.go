@@ -109,7 +109,7 @@ func (s *Server) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := s.storage.Add(s.convertRequestEvent(storage.Event{}, rqEvent))
+	id, err := s.storage.Add(r.Context(), s.convertRequestEvent(storage.Event{}, rqEvent))
 	if err != nil {
 		resp.Error.Message = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
@@ -150,7 +150,7 @@ func (s *Server) edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.storage.Edit(foundedEvent.ID, s.convertRequestEvent(foundedEvent, rqEvent))
+	err = s.storage.Edit(r.Context(), foundedEvent.ID, s.convertRequestEvent(foundedEvent, rqEvent))
 	if err != nil {
 		resp.Error.Message = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
@@ -180,7 +180,7 @@ func (s *Server) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.storage.Delete(deleteRq.ID)
+	err = s.storage.Delete(r.Context(), deleteRq.ID)
 	if err != nil {
 		resp.Error.Message = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
@@ -209,7 +209,7 @@ func (s *Server) listEventsDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := s.storage.ListEventsDay(dayRq)
+	events, err := s.storage.ListEventsDay(r.Context(), dayRq)
 	if err != nil {
 		resp.Error.Message = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
@@ -245,7 +245,7 @@ func (s *Server) listEventsWeek(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := s.storage.ListEventsWeek(dayRq)
+	events, err := s.storage.ListEventsWeek(r.Context(), dayRq)
 	if err != nil {
 		resp.Error.Message = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
@@ -281,7 +281,7 @@ func (s *Server) listEventsMonth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := s.storage.ListEventsMonth(dayRq)
+	events, err := s.storage.ListEventsMonth(r.Context(), dayRq)
 	if err != nil {
 		resp.Error.Message = err.Error()
 		w.WriteHeader(http.StatusBadRequest)

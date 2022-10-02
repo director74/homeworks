@@ -5,6 +5,7 @@
 package mock_app
 
 import (
+	context "context"
 	reflect "reflect"
 
 	storage "github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
@@ -123,46 +124,46 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockStorage) Add(arg0 storage.Event) (int64, error) {
+func (m *MockStorage) Add(arg0 context.Context, arg1 storage.Event) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", arg0)
+	ret := m.ctrl.Call(m, "Add", arg0, arg1)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockStorageMockRecorder) Add(arg0 interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) Add(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockStorage)(nil).Add), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockStorage)(nil).Add), arg0, arg1)
 }
 
 // Delete mocks base method.
-func (m *MockStorage) Delete(arg0 int64) error {
+func (m *MockStorage) Delete(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", arg0)
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockStorageMockRecorder) Delete(arg0 interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), arg0, arg1)
 }
 
 // Edit mocks base method.
-func (m *MockStorage) Edit(arg0 int64, arg1 storage.Event) error {
+func (m *MockStorage) Edit(arg0 context.Context, arg1 int64, arg2 storage.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Edit", arg0, arg1)
+	ret := m.ctrl.Call(m, "Edit", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Edit indicates an expected call of Edit.
-func (mr *MockStorageMockRecorder) Edit(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) Edit(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Edit", reflect.TypeOf((*MockStorage)(nil).Edit), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Edit", reflect.TypeOf((*MockStorage)(nil).Edit), arg0, arg1, arg2)
 }
 
 // GetByID mocks base method.
@@ -181,46 +182,46 @@ func (mr *MockStorageMockRecorder) GetByID(arg0 interface{}) *gomock.Call {
 }
 
 // ListEventsDay mocks base method.
-func (m *MockStorage) ListEventsDay(date string) ([]storage.Event, error) {
+func (m *MockStorage) ListEventsDay(ctx context.Context, date string) ([]storage.Event, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEventsDay", date)
+	ret := m.ctrl.Call(m, "ListEventsDay", ctx, date)
 	ret0, _ := ret[0].([]storage.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListEventsDay indicates an expected call of ListEventsDay.
-func (mr *MockStorageMockRecorder) ListEventsDay(date interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) ListEventsDay(ctx, date interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsDay", reflect.TypeOf((*MockStorage)(nil).ListEventsDay), date)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsDay", reflect.TypeOf((*MockStorage)(nil).ListEventsDay), ctx, date)
 }
 
 // ListEventsMonth mocks base method.
-func (m *MockStorage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error) {
+func (m *MockStorage) ListEventsMonth(ctx context.Context, monthBeginDate string) ([]storage.Event, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEventsMonth", monthBeginDate)
+	ret := m.ctrl.Call(m, "ListEventsMonth", ctx, monthBeginDate)
 	ret0, _ := ret[0].([]storage.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListEventsMonth indicates an expected call of ListEventsMonth.
-func (mr *MockStorageMockRecorder) ListEventsMonth(monthBeginDate interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) ListEventsMonth(ctx, monthBeginDate interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsMonth", reflect.TypeOf((*MockStorage)(nil).ListEventsMonth), monthBeginDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsMonth", reflect.TypeOf((*MockStorage)(nil).ListEventsMonth), ctx, monthBeginDate)
 }
 
 // ListEventsWeek mocks base method.
-func (m *MockStorage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) {
+func (m *MockStorage) ListEventsWeek(ctx context.Context, weekBeginDate string) ([]storage.Event, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEventsWeek", weekBeginDate)
+	ret := m.ctrl.Call(m, "ListEventsWeek", ctx, weekBeginDate)
 	ret0, _ := ret[0].([]storage.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListEventsWeek indicates an expected call of ListEventsWeek.
-func (mr *MockStorageMockRecorder) ListEventsWeek(weekBeginDate interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) ListEventsWeek(ctx, weekBeginDate interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsWeek", reflect.TypeOf((*MockStorage)(nil).ListEventsWeek), weekBeginDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEventsWeek", reflect.TypeOf((*MockStorage)(nil).ListEventsWeek), ctx, weekBeginDate)
 }

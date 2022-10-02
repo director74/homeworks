@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"testing"
@@ -12,17 +13,18 @@ import (
 )
 
 func TestStorage(t *testing.T) {
+	ctx := context.Background()
 	t.Run("Correct find event", func(t *testing.T) {
 		st := New()
 
 		fEvent, errPrepare := prepareItem(1)
-		id, errAdd := st.Add(fEvent)
+		id, errAdd := st.Add(ctx, fEvent)
 
 		require.NoError(t, errPrepare)
 		require.NoError(t, errAdd)
 		require.NotEqual(t, int64(0), id)
 
-		foundedEvent, errSearch := checkExist(st, time.Now().Format(storage.DateFormatISO), id)
+		foundedEvent, errSearch := checkExist(ctx, st, time.Now().Format(storage.DateFormatISO), id)
 
 		require.NoError(t, errSearch)
 		require.Equal(t, foundedEvent.ID, id)
@@ -34,7 +36,7 @@ func TestStorage(t *testing.T) {
 
 		for i := 1; i <= 2; i++ {
 			fEvent, errPrepare := prepareItem(i)
-			id, errAdd := st.Add(fEvent)
+			id, errAdd := st.Add(ctx, fEvent)
 
 			lastID = id
 			require.NotEqual(t, int64(0), id)
@@ -42,7 +44,7 @@ func TestStorage(t *testing.T) {
 			require.NoError(t, errPrepare)
 		}
 
-		err := st.Delete(lastID)
+		err := st.Delete(ctx, lastID)
 		require.NoError(t, err)
 		require.Equal(t, 1, st.count())
 	})
@@ -52,23 +54,23 @@ func TestStorage(t *testing.T) {
 		st := New()
 
 		fEvent, errPrepare := prepareItem(1)
-		id, errAdd := st.Add(fEvent)
+		id, errAdd := st.Add(ctx, fEvent)
 
 		require.NoError(t, errPrepare)
 		require.NoError(t, errAdd)
 		require.NotEqual(t, int64(0), id)
 
-		foundedEvent, errGetList := checkExist(st, time.Now().Format(storage.DateFormatISO), id)
+		foundedEvent, errGetList := checkExist(ctx, st, time.Now().Format(storage.DateFormatISO), id)
 
 		require.NoError(t, errGetList)
 		require.Equal(t, foundedEvent.ID, id)
 
 		foundedEvent.Title = "New name for event"
-		errEdit = st.Edit(id, foundedEvent)
+		errEdit = st.Edit(ctx, id, foundedEvent)
 
 		require.NoError(t, errEdit)
 
-		foundedEvent, errGetList = checkExist(st, time.Now().Format(storage.DateFormatISO), id)
+		foundedEvent, errGetList = checkExist(ctx, st, time.Now().Format(storage.DateFormatISO), id)
 
 		require.NoError(t, errGetList)
 		require.Equal(t, foundedEvent.ID, id)
@@ -80,7 +82,7 @@ func TestStorage(t *testing.T) {
 
 		fEvent, errPrepare := prepareItem(1)
 		fEvent.Title = ""
-		id, errAdd := st.Add(fEvent)
+		id, errAdd := st.Add(ctx, fEvent)
 
 		require.NoError(t, errPrepare)
 		require.Equal(t, int64(0), id)
@@ -92,7 +94,7 @@ func TestStorage(t *testing.T) {
 
 		fEvent, errPrepare := prepareItem(1)
 		fEvent.DateStart = time.Now().Add(time.Duration(-5) * time.Hour)
-		id, errAdd := st.Add(fEvent)
+		id, errAdd := st.Add(ctx, fEvent)
 
 		require.NoError(t, errPrepare)
 		require.Equal(t, int64(0), id)
@@ -104,7 +106,7 @@ func TestStorage(t *testing.T) {
 
 		fEvent, errPrepare := prepareItem(1)
 		fEvent.DateStart = time.Now().Add(time.Second * time.Duration(1))
-		id, errAdd := st.Add(fEvent)
+		id, errAdd := st.Add(ctx, fEvent)
 
 		require.NoError(t, errPrepare)
 		require.NotEqual(t, int64(0), id)
@@ -112,7 +114,7 @@ func TestStorage(t *testing.T) {
 
 		fEvent, errPrepare = prepareItem(1)
 		fEvent.DateStart = time.Now().Add(time.Second * time.Duration(1))
-		id, errAdd = st.Add(fEvent)
+		id, errAdd = st.Add(ctx, fEvent)
 
 		require.NoError(t, errPrepare)
 		require.Equal(t, int64(0), id)
@@ -122,6 +124,7 @@ func TestStorage(t *testing.T) {
 
 func TestStorage_Add(t *testing.T) {
 	st := New()
+	ctx := context.Background()
 
 	totalTries := 20
 
@@ -140,7 +143,7 @@ func TestStorage_Add(t *testing.T) {
 		event := event
 		t.Run(fmt.Sprintf("Parallel add event %d", i), func(t *testing.T) {
 			t.Parallel()
-			id, errAdd := st.Add(event)
+			id, errAdd := st.Add(ctx, event)
 			require.NotEqual(t, int64(0), id)
 			require.NoError(t, errAdd)
 		})
@@ -164,9 +167,9 @@ func prepareItem(num int) (storage.Event, error) {
 	return fEvent, errFacker
 }
 
-func checkExist(st *Storage, filterDate string, searchID int64) (storage.Event, error) {
+func checkExist(ctx context.Context, st *Storage, filterDate string, searchID int64) (storage.Event, error) {
 	var foundedEvent storage.Event
-	eventsSecond, err := st.ListEventsDay(filterDate)
+	eventsSecond, err := st.ListEventsDay(ctx, filterDate)
 
 	founded := false
 	for _, rangeEvent := range eventsSecond {

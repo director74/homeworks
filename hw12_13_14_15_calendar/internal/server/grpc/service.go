@@ -25,7 +25,7 @@ func NewService(storage app.Storage) *Service {
 }
 
 func (s *Service) Add(ctx context.Context, event *pb.Event) (*pb.AddResponse, error) {
-	id, err := s.storage.Add(s.convertRequestEvent(event))
+	id, err := s.storage.Add(ctx, s.convertRequestEvent(event))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -37,7 +37,7 @@ func (s *Service) Edit(ctx context.Context, event *pb.EditEvent) (*empty.Empty, 
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
-	if err := s.storage.Edit(event.ID, s.editMergeEvents(foundedEvent, event)); err != nil {
+	if err := s.storage.Edit(ctx, event.ID, s.editMergeEvents(foundedEvent, event)); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -45,7 +45,7 @@ func (s *Service) Edit(ctx context.Context, event *pb.EditEvent) (*empty.Empty, 
 }
 
 func (s *Service) Delete(ctx context.Context, request *pb.DeleteRequest) (*empty.Empty, error) {
-	if err := s.storage.Delete(request.ID); err != nil {
+	if err := s.storage.Delete(ctx, request.ID); err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
@@ -57,7 +57,7 @@ func (s *Service) ListEventsDay(
 	date *pb.ListEventsDayRequest,
 ) (*pb.ListEventsResponse, error) {
 	result := make([]*pb.Event, 0)
-	events, err := s.storage.ListEventsDay(date.GetDate())
+	events, err := s.storage.ListEventsDay(ctx, date.GetDate())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -72,7 +72,7 @@ func (s *Service) ListEventsWeek(
 	date *pb.ListEventsWeekRequest,
 ) (*pb.ListEventsResponse, error) {
 	result := make([]*pb.Event, 0)
-	events, err := s.storage.ListEventsWeek(date.GetWeekBeginDate())
+	events, err := s.storage.ListEventsWeek(ctx, date.GetWeekBeginDate())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -87,7 +87,7 @@ func (s *Service) ListEventsMonth(
 	date *pb.ListEventsMonthRequest,
 ) (*pb.ListEventsResponse, error) {
 	result := make([]*pb.Event, 0)
-	events, err := s.storage.ListEventsMonth(date.GetMonthBeginDate())
+	events, err := s.storage.ListEventsMonth(ctx, date.GetMonthBeginDate())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
