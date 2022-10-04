@@ -7,7 +7,7 @@ import (
 
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/cfg"
 	"github.com/director74/homeworks/hw12_13_14_15_calendar/internal/storage"
-	_ "github.com/jackc/pgx/stdlib" // linter said that need comment
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -34,53 +34,51 @@ func (s *Storage) Connect(ctx context.Context, params cfg.DatabaseConf) (err err
 	return nil
 }
 
-// TODO Как здесь использовать контекст?
-
-func (s *Storage) Close(ctx context.Context) error {
+func (s *Storage) Close() error {
 	if err := s.conn.Close(); err != nil {
 		return fmt.Errorf("failed to close connection: %w", err)
 	}
 	return nil
 }
 
-func (s *Storage) Add(event storage.Event) (int64, error) {
+func (s *Storage) Add(ctx context.Context, event storage.Event) (int64, error) {
 	var returnedID int64
 
-	err := s.validate(event)
+	err := s.validate(ctx, event)
 	if err != nil {
 		return 0, err
 	}
 
-	res, err := s.conn.NamedQuery(`
-		INSERT INTO events ("Title", "DateStart", "DateEnd", "Description", "UserID", "NotificationInterval") 
-		VALUES (:Title, :DateStart, :DateEnd, :Description, :UserID, :NotificationInterval)
+	returnedID = 0
+
+	err = s.conn.GetContext(
+		ctx,
+		&returnedID,
+		`INSERT INTO events ("Title", "DateStart", "DateEnd", "Description", "UserID", "NotificationInterval")
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING "ID"`,
-		event,
-	)
+		event.Title,
+		event.DateStart,
+		event.DateEnd,
+		event.Description,
+		event.UserID,
+		event.NotificationInterval)
 	if err != nil {
 		return 0, fmt.Errorf("failed to add record: %w", err)
-	}
-	defer res.Close()
-
-	for res.Next() {
-		err = res.Scan(&returnedID)
-		if err != nil {
-			return 0, fmt.Errorf("failed to scan record: %w", err)
-		}
 	}
 
 	return returnedID, nil
 }
 
-func (s *Storage) Edit(i int64, event storage.Event) error {
-	err := s.validate(event)
+func (s *Storage) Edit(ctx context.Context, i int64, event storage.Event) error {
+	err := s.validate(ctx, event)
 	if err != nil {
 		return err
 	}
 
 	event.ID = i
-	_, err = s.conn.NamedExec(`
-		UPDATE events 
+	_, err = s.conn.NamedExecContext(ctx,
+		`UPDATE events 
 		SET ("Title", "DateStart", "DateEnd", "Description", "UserID", "NotificationInterval") = 
 		    (:Title, :DateStart, :DateEnd, :Description, :UserID, :NotificationInterval)
 		WHERE "ID" = :ID`,
@@ -93,16 +91,44 @@ func (s *Storage) Edit(i int64, event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) Delete(i int64) error {
-	_, err := s.conn.Exec(`DELETE FROM events WHERE "ID" = $1`, i)
+func (s *Storage) Delete(ctx context.Context, i int64) error {
+	deletedCount := 0
+
+	err := s.conn.GetContext(
+		ctx,
+		&deletedCount,
+		`WITH deleted AS 
+    	(DELETE FROM events WHERE "ID" = $1 RETURNING *) SELECT count(*) FROM deleted`,
+		i,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to delete record: %w", err)
+	}
+
+	if deletedCount < 1 {
+		return storage.ErrDeleteNotFound
 	}
 
 	return nil
 }
 
-func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
+func (s *Storage) GetByID(id int64) (storage.Event, error) {
+	event := storage.Event{}
+	err := s.conn.Get(&event, `SELECT * FROM events WHERE "ID"=$1`, id)
+	if err != nil {
+		return storage.Event{}, fmt.Errorf("failed to get event: %w", err)
+	}
+	if event.ID == 0 {
+		return storage.Event{}, storage.ErrEventNotFound
+	}
+
+	return event, nil
+}
+
+func (s *Storage) ListEventsDay(ctx context.Context, date string) ([]storage.Event, error) {
+	if date == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, date, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -110,10 +136,13 @@ func (s *Storage) ListEventsDay(date string) ([]storage.Event, error) {
 
 	dt2 := dt.Add(time.Hour * 23).Add(time.Minute * 59).Add(time.Second * 59)
 
-	return s.listByDates(dt, dt2)
+	return s.listByDates(ctx, dt, dt2)
 }
 
-func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) {
+func (s *Storage) ListEventsWeek(ctx context.Context, weekBeginDate string) ([]storage.Event, error) {
+	if weekBeginDate == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, weekBeginDate, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -121,10 +150,13 @@ func (s *Storage) ListEventsWeek(weekBeginDate string) ([]storage.Event, error) 
 
 	dt2 := dt.AddDate(0, 0, 6).Add(time.Hour * 23).Add(time.Minute * 59).Add(time.Second * 59)
 
-	return s.listByDates(dt, dt2)
+	return s.listByDates(ctx, dt, dt2)
 }
 
-func (s *Storage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error) {
+func (s *Storage) ListEventsMonth(ctx context.Context, monthBeginDate string) ([]storage.Event, error) {
+	if monthBeginDate == "" {
+		return nil, storage.ErrEmptyDate
+	}
 	dt, err := time.ParseInLocation(storage.DateFormatISO, monthBeginDate, time.Local)
 	if err != nil {
 		return nil, fmt.Errorf("wrong date format: %w", err)
@@ -132,13 +164,14 @@ func (s *Storage) ListEventsMonth(monthBeginDate string) ([]storage.Event, error
 
 	dt2 := dt.AddDate(0, 1, -dt.Day())
 
-	return s.listByDates(dt, dt2)
+	return s.listByDates(ctx, dt, dt2)
 }
 
-func (s *Storage) listByDates(dt time.Time, dt2 time.Time) ([]storage.Event, error) {
+func (s *Storage) listByDates(ctx context.Context, dt time.Time, dt2 time.Time) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
-	err := s.conn.Select(
+	err := s.conn.SelectContext(
+		ctx,
 		&events,
 		`SELECT * FROM events WHERE "DateStart" BETWEEN $1 AND $2 OR "DateEnd" BETWEEN $1 AND $2 ORDER BY "ID" ASC`,
 		dt,
@@ -151,9 +184,12 @@ func (s *Storage) listByDates(dt time.Time, dt2 time.Time) ([]storage.Event, err
 	return events, nil
 }
 
-func (s *Storage) validate(event storage.Event) error {
+func (s *Storage) validate(ctx context.Context, event storage.Event) error {
 	if event.Title == "" {
 		return storage.ErrWrongTitle
+	}
+	if event.UserID == 0 {
+		return storage.ErrWrongUserID
 	}
 	if event.DateStart.Before(time.Now()) {
 		return storage.ErrWrongDateStart
@@ -161,14 +197,17 @@ func (s *Storage) validate(event storage.Event) error {
 	if event.DateEnd.Before(event.DateStart) {
 		return storage.ErrWrongDateEnd
 	}
-	if s.checkBusy(event.DateStart, event.DateEnd, event.ID) {
+	if event.DateStart == event.DateEnd {
+		return storage.ErrSameDates
+	}
+	if s.checkBusy(ctx, event.DateStart, event.DateEnd, event.ID) {
 		return storage.ErrDateBusy
 	}
 	return nil
 }
 
-func (s *Storage) checkBusy(dateStart time.Time, dateEnd time.Time, id int64) bool {
-	events, _ := s.listByDates(dateStart, dateEnd)
+func (s *Storage) checkBusy(ctx context.Context, dateStart time.Time, dateEnd time.Time, id int64) bool {
+	events, _ := s.listByDates(ctx, dateStart, dateEnd)
 	if len(events) > 0 {
 		for _, founded := range events {
 			if founded.ID != id {

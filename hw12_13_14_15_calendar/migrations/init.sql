@@ -5,5 +5,5 @@ CREATE TABLE "public"."events" (
    "DateEnd" timestamp(6) not null,
    "Description" text COLLATE "pg_catalog"."default",
    "UserID" int8,
-   "NotificationInterval" int2
+   "NotificationInterval" int4
 );

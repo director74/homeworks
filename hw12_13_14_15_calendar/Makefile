@@ -23,12 +23,22 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/logger/ ./internal/storage/memory/
+	go test -race ./internal/logger/ ./internal/storage/memory/ ./internal/server/http/
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
 
 lint: install-lint-deps
-	golangci-lint run ./cmd/calendar ./internal/app ./internal/cfg ./internal/logger ./internal/server/http ./internal/storage ./internal/storage/memory ./internal/storage/sql
+	golangci-lint run ./cmd/calendar ./internal/app ./internal/cfg ./internal/logger ./internal/server/http ./internal/server/grpc ./internal/storage ./internal/storage/memory ./internal/storage/sql
+
+generate:
+	rm -rf internal/server/grpc/pb
+	mkdir -p internal/server/grpc/pb
+
+	protoc \
+		--proto_path=api/ \
+		--go_out=internal/server/grpc/pb \
+		--go-grpc_out=internal/server/grpc/pb \
+		api/*.proto
 
 .PHONY: build run build-img run-img version test lint
