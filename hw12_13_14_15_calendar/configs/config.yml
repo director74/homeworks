@@ -3,8 +3,12 @@ logger:
 database:
   user: "postgres"
   pass: "mzPk2EJJP"
-server:
-  host: localhost
-  port: 8080
+servers:
+  grpc:
+    host: localhost
+    port: 50051
+  http:
+    host: localhost
+    port: 8080
 app:
   storageType: "sql"
