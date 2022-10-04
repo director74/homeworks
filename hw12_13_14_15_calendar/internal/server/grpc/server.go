@@ -18,17 +18,12 @@ type Server struct {
 	storage app.Storage
 }
 
-type Application interface {
-	GetGRPCServerConf() cfg.GRPCServerConf
-	GetStorage() app.Storage
-}
-
-func NewServer(logger app.Logger, app Application) *Server {
+func NewServer(logger app.Logger, storage app.Storage, grpcConf cfg.GRPCServerConf) *Server {
 	return &Server{
-		port:    app.GetGRPCServerConf().Port,
-		host:    app.GetGRPCServerConf().Host,
+		port:    grpcConf.Port,
+		host:    grpcConf.Host,
 		logg:    logger,
-		storage: app.GetStorage(),
+		storage: storage,
 	}
 }
 

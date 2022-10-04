@@ -24,15 +24,15 @@ func NewService(storage app.Storage) *Service {
 	}
 }
 
-func (s *Service) Add(ctx context.Context, event *pb.Event) (*pb.AddResponse, error) {
+func (s *Service) AddEvent(ctx context.Context, event *pb.AddEventRequest) (*pb.AddEventResponse, error) {
 	id, err := s.storage.Add(ctx, s.convertRequestEvent(event))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	return &pb.AddResponse{ID: id}, status.Error(codes.OK, "Success")
+	return &pb.AddEventResponse{ID: id}, status.Error(codes.OK, "Success")
 }
 
-func (s *Service) Edit(ctx context.Context, event *pb.EditEvent) (*empty.Empty, error) {
+func (s *Service) EditEvent(ctx context.Context, event *pb.EditEventRequest) (*empty.Empty, error) {
 	foundedEvent, err := s.storage.GetByID(event.GetID())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
@@ -44,7 +44,7 @@ func (s *Service) Edit(ctx context.Context, event *pb.EditEvent) (*empty.Empty, 
 	return &empty.Empty{}, status.Error(codes.OK, "Success")
 }
 
-func (s *Service) Delete(ctx context.Context, request *pb.DeleteRequest) (*empty.Empty, error) {
+func (s *Service) DeleteEvent(ctx context.Context, request *pb.DeleteEventRequest) (*empty.Empty, error) {
 	if err := s.storage.Delete(ctx, request.ID); err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
@@ -56,7 +56,7 @@ func (s *Service) ListEventsDay(
 	ctx context.Context,
 	date *pb.ListEventsDayRequest,
 ) (*pb.ListEventsResponse, error) {
-	result := make([]*pb.Event, 0)
+	result := make([]*pb.ListEvent, 0)
 	events, err := s.storage.ListEventsDay(ctx, date.GetDate())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -71,7 +71,7 @@ func (s *Service) ListEventsWeek(
 	ctx context.Context,
 	date *pb.ListEventsWeekRequest,
 ) (*pb.ListEventsResponse, error) {
-	result := make([]*pb.Event, 0)
+	result := make([]*pb.ListEvent, 0)
 	events, err := s.storage.ListEventsWeek(ctx, date.GetWeekBeginDate())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -86,7 +86,7 @@ func (s *Service) ListEventsMonth(
 	ctx context.Context,
 	date *pb.ListEventsMonthRequest,
 ) (*pb.ListEventsResponse, error) {
-	result := make([]*pb.Event, 0)
+	result := make([]*pb.ListEvent, 0)
 	events, err := s.storage.ListEventsMonth(ctx, date.GetMonthBeginDate())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -97,7 +97,7 @@ func (s *Service) ListEventsMonth(
 	return &pb.ListEventsResponse{Events: result}, status.Error(codes.OK, "Success")
 }
 
-func (s *Service) convertRequestEvent(event *pb.Event) storage.Event {
+func (s *Service) convertRequestEvent(event *pb.AddEventRequest) storage.Event {
 	return storage.Event{
 		ID:                   event.ID,
 		Title:                event.Title,
@@ -109,7 +109,7 @@ func (s *Service) convertRequestEvent(event *pb.Event) storage.Event {
 	}
 }
 
-func (s *Service) editMergeEvents(storageEvent storage.Event, pbEvent *pb.EditEvent) storage.Event {
+func (s *Service) editMergeEvents(storageEvent storage.Event, pbEvent *pb.EditEventRequest) storage.Event {
 	result := storageEvent
 
 	if pbEvent.GetTitle() != nil {
@@ -139,8 +139,8 @@ func (s *Service) editMergeEvents(storageEvent storage.Event, pbEvent *pb.EditEv
 	return result
 }
 
-func (s *Service) convertResponseEvent(event storage.Event) *pb.Event {
-	return &pb.Event{
+func (s *Service) convertResponseEvent(event storage.Event) *pb.ListEvent {
+	return &pb.ListEvent{
 		ID:                   event.ID,
 		Title:                event.Title,
 		DateStart:            &timestamp.Timestamp{Seconds: event.DateStart.Unix()},

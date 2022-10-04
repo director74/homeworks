@@ -39,15 +39,3 @@ func New(logger Logger, storage Storage, config cfg.Configurable) *App {
 		config:  config,
 	}
 }
-
-func (a *App) GetHTTPServerConf() cfg.HTTPServerConf {
-	return a.config.GetServersConf().HTTP
-}
-
-func (a *App) GetGRPCServerConf() cfg.GRPCServerConf {
-	return a.config.GetServersConf().GRPC
-}
-
-func (a *App) GetStorage() Storage {
-	return a.storage
-}

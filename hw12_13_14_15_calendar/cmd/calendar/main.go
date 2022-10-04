@@ -56,10 +56,10 @@ func main() {
 	default:
 		storage = memorystorage.New()
 	}
-	calendar := app.New(logg, storage, config)
+	app.New(logg, storage, config)
 
-	httpServer := internalhttp.NewServer(logg, calendar)
-	grpcServer := internalgrpc.NewServer(logg, calendar)
+	httpServer := internalhttp.NewServer(logg, storage, config.GetServersConf().HTTP)
+	grpcServer := internalgrpc.NewServer(logg, storage, config.GetServersConf().GRPC)
 
 	ctx, cancel := signal.NotifyContext(ctx,
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

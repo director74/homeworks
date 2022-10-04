@@ -22,11 +22,6 @@ type Server struct {
 	storage app.Storage
 }
 
-type Application interface {
-	GetHTTPServerConf() cfg.HTTPServerConf
-	GetStorage() app.Storage
-}
-
 type Response struct {
 	Data  interface{} `json:"data"`
 	Error struct {
@@ -56,13 +51,12 @@ type DeleteRequest struct {
 	ID int64 `json:"id,omitempty"`
 }
 
-func NewServer(logger app.Logger, app Application) *Server {
-	conf := app.GetHTTPServerConf()
+func NewServer(logger app.Logger, storage app.Storage, httpConf cfg.HTTPServerConf) *Server {
 	return &Server{
-		port:    conf.Port,
-		host:    conf.Host,
+		port:    httpConf.Port,
+		host:    httpConf.Host,
 		logg:    logger,
-		storage: app.GetStorage(),
+		storage: storage,
 	}
 }
 

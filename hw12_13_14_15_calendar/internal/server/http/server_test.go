@@ -32,8 +32,8 @@ func TestNewServer(t *testing.T) {
 
 	mockConfig.EXPECT().GetServersConf().Return(cfg.ServersConf{GRPC: cfg.GRPCServerConf{}, HTTP: cfg.HTTPServerConf{}})
 
-	apl := app.New(mockLog, mockStorage, mockConfig)
-	s := NewServer(mockLog, apl)
+	app.New(mockLog, mockStorage, mockConfig)
+	s := NewServer(mockLog, mockStorage, mockConfig.GetServersConf().HTTP)
 
 	const beginDate = "2022-10-01"
 
